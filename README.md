@@ -1,4 +1,4 @@
-# Coral Reef
+# Him
 
-Generative Art
+Him is a Generative Art project focused on circle packing and color theory.
 
