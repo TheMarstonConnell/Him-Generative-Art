@@ -34,7 +34,8 @@ let updatedCircles;
 
 function makeCircles(cCount) {
 
-    let r = Math.floor(cCount / (Math.floor(fxrand() * 3) + 1))
+    let r = Math.floor(cCount * 0.9)
+    r = r > 1 ? r : 2
 
     circles = []
     for (let index = 0; index < cCount; index++) {
@@ -125,12 +126,14 @@ function setup() {
     img.background(backgroundColor)
 
 
-    maxSize = Math.floor(fxrand() * 100)
-    minSize = Math.floor(fxrand() * 30 + 5)
+    maxSize = Math.floor(fxrand() * 70 + 70)
+    minSize = Math.floor(fxrand() * 20 + 10)
 
-    let cc = Math.floor(fxrand() * 10 + 10) 
+    let l = log(maxSize)
 
-    makeCircles(cc)
+    let cc = (-1) * 16 * l + 90
+
+    makeCircles(Math.floor(cc))
 
 
     packer = new CirclePacker( makeOptions() );
