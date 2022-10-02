@@ -1,5 +1,6 @@
 
 let img;
+let mask;
 
 let width;
 let height;
@@ -7,46 +8,78 @@ let height;
 let w;
 let h;
 
-let nSize = 0.05;
+let packer;
+
+let globColor;
+let background;
+
+let doDraw = true;
+
+let updatedCircles;
+
+let globCount;
+
+let circles;
 
 let tick = 0;
 
-let drawSpeed = 1
-let drawCounter = 0
+function makeCircles(count) {
+    circles = [];
 
-let doDraw = true
-
-
-let radSpacing = 20
-let currentRadius = 100
-
-let globColor;
-let backgroundColor;
-let accentColor;
-
-
-let minSize;
-let maxSize;
-
-let circles;
-let packer;
-let updatedCircles;
-
-function makeCircles(cCount) {
-
-    let r = Math.floor(cCount * 0.9)
-    r = r > 1 ? r : 2
-
-    circles = []
-    for (let index = 0; index < cCount; index++) {
-        circles.push({
+    for (let index = 0; index < count; index++) {
+        let k = {
             id: `${index}-circle`,
-            radius: Math.floor(fxrand() * (maxSize - minSize) + minSize),
-            position: {x : fxrand() * w, y : fxrand() * h},
-            color: index % r > 0 ? globColor : accentColor,
-        })
-        
+            position : { 
+                x: Math.floor(noise(index) * w), 
+                y: Math.floor(noise(index * fxrand()) * h)
+            },
+            radius: Math.floor(fxrand() * 20 + 50)
+        }
+        circles.push(k)
     }
+
+}
+
+function setup() {
+
+    w = 800
+    h = 800
+
+
+    noiseSeed(fxrand() * 100000)
+
+    let ks = min(windowHeight, windowWidth)
+
+    width = ks / 4 * 3
+    height = ks / 4 * 3
+
+    createCanvas(width, height);
+    
+    mask = createGraphics(w, h);
+
+    img = createGraphics(w, h);
+
+    let p = getPalette()
+
+    background = color(p.background)
+    globColor = color(p.foreground)
+
+    img.background(background)
+
+
+    let globCount = Math.floor(fxrand() * 10 + 4)
+    makeCircles(globCount)
+
+    packer = new CirclePacker( makeOptions() );
+    packer.setDamping( 0.005 );
+
+    tick = 0;
+    
+    window.$fxhashFeatures = {
+        "Count": globCount,
+    }
+
+    console.log(window.$fxhashFeatures)
 }
 
 function makeOptions() {
@@ -68,7 +101,7 @@ function makeOptions() {
 		// true: continuous animation loop
 		// false: one-time animation
 		// OPTIONAL. default: true
-		continuousMode: true,
+		continuousMode: false,
 		
 		// correctness of collision calculations.
 		// higher number means means longer time to calculate
@@ -101,60 +134,13 @@ function makeOptions() {
 
 }
 
-function setup() {
-
-    w = 800
-    h = 800
-
-    noiseSeed(fxrand() * 100000)
-
-    let ks = min(windowHeight, windowWidth)
-
-    width = ks / 4 * 3
-    height = ks / 4 * 3
-
-    createCanvas(width, height);
-
-    img = createGraphics(w, h);
-
-    let p = getPalette()
-
-    backgroundColor = color(p.background)
-    globColor = color(p.foreground)
-    accentColor = color(p.accent)
-
-    img.background(backgroundColor)
-
-
-    maxSize = Math.floor(fxrand() * 70 + 70)
-    minSize = Math.floor(fxrand() * 20 + 10)
-
-    let l = log(maxSize)
-
-    let cc = (-1) * 16 * l + 90
-
-    makeCircles(Math.floor(cc))
-
-
-    packer = new CirclePacker( makeOptions() );
-
-    window.$fxhashFeatures = {
-        "Count": cc,
-        "Min Size": minSize,
-        "Max Size": maxSize,
-    }
-
-    console.log(window.$fxhashFeatures)
-}
-
 
 function getPalette() {
     colors = [
         {
-            name: "Coffee Bean",
-            background: "#e6dfcf",
-            foreground: "#202020",
-            accent: "#61A0AF"
+            name: "Vanilla",
+            background: "#fefae0",
+            foreground: "#353535",
         }
     ]
 
@@ -162,48 +148,46 @@ function getPalette() {
     return colors[choice]
 }
 
-
+function drawCircles() {
+    for (const c of Object.keys(updatedCircles)) {
+        let circle = updatedCircles[c]
+        let cc = 10
+        for (let index = 0; index < cc; index ++) {
+            img.noStroke()
+            img.fill(index % 2  ? background : globColor)
+            let r = circle.radius * 3
+            img.circle(circle.position.x, circle.position.y, r - (r / cc * index))
+            
+        }
+        
+    }
+}
 
 function draw() {
 
+    // drawGrid()
+
     if (!doDraw) {
         return
+    }
+
+    if (tick < 60) {
+        packer.update();
+        tick += 1;
+    }else{
+        fxpreview()
+        doDraw = false
     }
 
     if (updatedCircles == null) {
         return
     }
 
-    img.background(backgroundColor)
-
-    let x = 0;
-    for (const c of Object.keys(updatedCircles)) {
-        let b = updatedCircles[c]
-        img.noStroke()
-        img.fill(circles[x].color)
-        img.circle(b.position.x + 10, b.position.y + 10, b.radius * 2)
-        x ++;
-    }
-
     
 
-    let ratio = width / w
-
-    drawCounter += drawSpeed
-
-    // img.background(backgroundColor)
-
-    while (drawCounter >= 1) {
-        drawCounter -= 1
-    }
-
-
+    drawCircles()
 
     image(img, 0, 0, width, height)
+    
 
-    // img.circle(400, 400, 20)
-
-    if (currentRadius > w) {
-        doDraw = false
-    }
 }
